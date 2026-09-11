@@ -8,8 +8,38 @@ class Base(DeclarativeBase):
     pass
 
 
+def normalize_database_url(url: str) -> str:
+    """
+    Ensure PostgreSQL connections use Psycopg 3.
+
+    Render may provide:
+        postgresql://...
+
+    while the application uses:
+        postgresql+psycopg://...
+    """
+    if url.startswith("postgres://"):
+        return url.replace(
+            "postgres://",
+            "postgresql+psycopg://",
+            1,
+        )
+
+    if url.startswith("postgresql://"):
+        return url.replace(
+            "postgresql://",
+            "postgresql+psycopg://",
+            1,
+        )
+
+    return url
+
+
+DATABASE_URL = normalize_database_url(settings.DATABASE_URL)
+
+
 engine = create_engine(
-    settings.DATABASE_URL,
+    DATABASE_URL,
     pool_pre_ping=True,
 )
 
