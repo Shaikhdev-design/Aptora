@@ -141,7 +141,27 @@ export default function OpportunitiesPage() {
   const [error, setError] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<number | null>(null);
 
+  // NEW: track authentication state
+  const [isAuthenticated, setIsAuthenticated] = useState<
+    boolean | null
+  >(null);
+
   useEffect(() => {
+    const token = localStorage.getItem("aptora_access_token");
+    setIsAuthenticated(Boolean(token));
+  }, []);
+
+  useEffect(() => {
+    // Wait until authentication state is known.
+    if (isAuthenticated === null) return;
+
+    // Logged-out users should not load the opportunity catalogue.
+    if (!isAuthenticated) {
+      setLoading(false);
+      setError(null);
+      return;
+    }
+
     let cancelled = false;
 
     async function loadPageData() {
@@ -216,7 +236,7 @@ export default function OpportunitiesPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isAuthenticated]);
 
   const filtered = useMemo(() => {
     let result = opportunities.filter((item) => {
@@ -335,6 +355,64 @@ export default function OpportunitiesPage() {
   const schemeCount = opportunities.filter(
     (item) => item.category === "Schemes",
   ).length;
+
+  // NEW: logged-out gate
+  if (isAuthenticated === false) {
+    return (
+      <main className="min-h-screen bg-[#FAF9FC] text-[#29252F]">
+        <div className="mx-auto flex min-h-[75vh] max-w-[1250px] items-center justify-center px-6 py-16 sm:px-8">
+          <div className="w-full max-w-[520px] rounded-[30px] border border-[#E4DFE8] bg-white px-7 py-14 text-center shadow-[0_20px_60px_rgba(50,40,70,0.04)] sm:px-12">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F1EDF7] text-[#5B4B8A]">
+              <Sparkles size={22} />
+            </div>
+
+            <p className="mt-7 text-[9px] font-semibold uppercase tracking-[0.17em] text-[#AAA4B1]">
+              Aptora Opportunities
+            </p>
+
+            <h1 className="mt-3 text-[28px] font-semibold tracking-[-0.045em] sm:text-[32px]">
+              Log in to view opportunities
+            </h1>
+
+            <p className="mx-auto mt-4 max-w-[400px] text-[11px] leading-6 text-[#817B87]">
+              Sign in to explore scholarships, internships,
+              jobs, fellowships, training, programs and
+              competitions matched to you.
+            </p>
+
+            <Link
+              href="/login"
+              className="mx-auto mt-7 flex h-11 w-fit items-center gap-2 rounded-full bg-[#5B4B8A] px-6 text-[10px] font-semibold text-white transition hover:bg-[#4E407A]"
+            >
+              Log in
+              <ArrowRight size={12} />
+            </Link>
+
+            <p className="mt-5 text-[9px] text-[#AAA4B1]">
+              New to Aptora?{" "}
+              <Link
+                href="/signup"
+                className="font-medium text-[#5B4B8A] hover:underline"
+              >
+                Create an account
+              </Link>
+            </p>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // NEW: authentication check is still being resolved
+  if (isAuthenticated === null) {
+    return (
+      <main className="min-h-screen bg-[#FAF9FC] text-[#29252F]">
+        <div className="mx-auto flex min-h-[75vh] max-w-[1250px] items-center justify-center px-6">
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#E4DFE8] border-t-[#5B4B8A]" />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#FAF9FC] text-[#29252F]">
